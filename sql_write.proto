@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package sql_write;
+
+service SQLWrite {
+    rpc WriteUsers (Users) returns (Ack) {}
+}
+
+message Ack {
+    bool msg = 1;
+}
+
+message Users {
+    repeated string name = 1;
+}
