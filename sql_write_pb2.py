@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0fsql_write.proto\x12\tsql_write\"\x12\n\x03\x41\x63k\x12\x0b\n\x03msg\x18\x01 \x01(\x08\"\x15\n\x05Users\x12\x0c\n\x04name\x18\x01 \x03(\t2<\n\x08SQLWrite\x12\x30\n\nWriteUsers\x12\x10.sql_write.Users\x1a\x0e.sql_write.Ack\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x0fsql_write.proto\x12\tsql_write\"\x12\n\x03\x41\x63k\x12\x0b\n\x03msg\x18\x01 \x01(\x08\"\x16\n\x05Users\x12\r\n\x05names\x18\x01 \x03(\t2<\n\x08SQLWrite\x12\x30\n\nWriteUsers\x12\x10.sql_write.Users\x1a\x0e.sql_write.Ack\"\x00\x62\x06proto3'
 )
 
 
@@ -66,7 +66,7 @@ _USERS = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='sql_write.Users.name', index=0,
+      name='names', full_name='sql_write.Users.names', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -85,7 +85,7 @@ _USERS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=50,
-  serialized_end=71,
+  serialized_end=72,
 )
 
 DESCRIPTOR.message_types_by_name['Ack'] = _ACK
@@ -115,8 +115,8 @@ _SQLWRITE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=73,
-  serialized_end=133,
+  serialized_start=74,
+  serialized_end=134,
   methods=[
   _descriptor.MethodDescriptor(
     name='WriteUsers',

@@ -11,5 +11,5 @@ message Ack {
 }
 
 message Users {
-    repeated string name = 1;
+    repeated string names = 1;
 }

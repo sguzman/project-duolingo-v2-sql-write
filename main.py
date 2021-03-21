@@ -3,6 +3,7 @@ import grpc
 import json
 import logging
 import os
+import psycopg2
 
 from concurrent import futures
 from typing import Dict
@@ -10,17 +11,13 @@ from typing import List
 from typing import Tuple
 
 
-import user_pb2
-import user_pb2_grpc
 import sql_pb2
 import sql_pb2_grpc
 import sql_write_pb2
 import sql_write_pb2_grpc
-import sql_read_pb2
-import sql_read_pb2_grpc
 
 
-name: str = 'SQL'
+name: str = 'SQLWrite'
 v: str = 'v2'
 
 env_json_file: str = os.path.abspath('./env.json')
@@ -31,18 +28,34 @@ log = None
 env = {}
 env_list: List[str] = [
     "PORT",
-    "USER_PORT",
-    "USER_IP",
-    "WRITE_PORT",
-    "WRITE_IP",
-    "READ_PORT",
-    "READ_IP"
+    "PG_PORT",
+    "PG_HOST",
+    "PG_USER",
+    "PG_PASS",
+    "PG_DB"
 ]
 
 
 def get(key: str) -> str:
     global env
     return env[key]
+
+
+def init_sql() -> None:
+    db: str = get('PG_DB')
+    usr: str = get('PG_USER')
+    host: str = get('PG_HOST')
+    port: str = get('PG_PORT')
+    pss: str = get('PG_PASS')
+
+    global conn
+    conn = psycopg2.connect(database=db,
+                            user=usr,
+                            password=pss,
+                            host=host,
+                            port=port)
+
+    log.info('Successfully connected to db')
 
 
 def init_env() -> None:
@@ -78,7 +91,7 @@ def init_log() -> None:
 
 def init_server() -> None:
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
-    sql_pb2_grpc.add_SQLServicer_to_server(Server(), server)
+    sql_write_pb2_grpc.add_SQLWriteServicer_to_server(Server(), server)
     port = get('PORT')
     server.add_insecure_port(f'localhost:{port}')
 
@@ -99,35 +112,26 @@ def init_json() -> None:
         log.warning('Did not find env json file - using env vars')
 
 
-class Server(user_pb2_grpc.PingServicer):
+class Server(sql_write_pb2_grpc.SQLWriteServicer):
+    insert_1: str = 'INSERT INTO duolingo.data.users '
+    insert_2: str = '(username) VALUES (%s) ON CONFLICT DO NOTHING'
+    insert: str = insert_1 + insert_2
+
     @staticmethod
-    def get_user() -> str:
-        ip: str = get('READ_IP')
-        port: str = get('READ_PORT')
-        addr: str = f'{ip}:{port}'
+    def write_users(users: List[str]) -> None:
+        curr = conn.cursor()
 
-        log.info('Connecting to SQLREAD service at %s', addr)
-        channel = grpc.insecure_channel(addr)
-        stub = sql_read_pb2_grpc.SQLReadStub(channel)
+        for usr in users:
+            curr.execute(Server.insert, [usr])
 
-        response = stub.GetUser(sql_pb2.Ack(msg=True))
-        user: str = response.name
-
-        log.info('Got user %s', user)
-        return user
-
-    def GetUser(self, request, context):
-        log.info('Received request for username')
-        # TODO - need to trigger sql read
-        name = Server.get_user()
-
-        log.info('Sending user %s', name)
-        return sql_pb2.User(name=name)
+        conn.commit()
+        curr.close()
 
     def WriteUsers(self, request, context):
         users: List[str] = request.names
         log.info('Received request to write users:')
         log.info(users)
+        Server.write_users(users)
 
         return sql_pb2.Ack(msg=True)
 
@@ -137,6 +141,7 @@ def init() -> None:
     init_json()
     init_env()
     init_atexit()
+    init_sql()
     init_server()
 
 
